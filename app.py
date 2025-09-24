@@ -1,3 +1,5 @@
+
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -50,7 +52,6 @@ if mode == "Manual Input":
     user_data = np.array([[heart_rate, hrv, spo2, resp_rate, temp]])
 
     if st.button("Predict Parameters"):
-        # ----------------- Predictions -----------------
         stress_pred = stress_model.predict(user_data)
         cardio_pred = cardio_model.predict(user_data)
         fever_pred = fever_model.predict(user_data)
@@ -59,15 +60,11 @@ if mode == "Manual Input":
         cardio_label = cardio_le.inverse_transform(cardio_pred)[0]
         fever_label = fever_le.inverse_transform(fever_pred)[0]
 
-        # ----------------- Personalized greeting -----------------
         st.markdown(f"### {name}, this is your health report. Stay Healthy! 🎯")
-
-        # ----------------- Display predictions with color -----------------
         st.markdown(f"**Stress Level:** {color_risk(stress_label)}", unsafe_allow_html=True)
         st.markdown(f"**Cardio-Respiratory Risk:** {color_risk(cardio_label)}", unsafe_allow_html=True)
         st.markdown(f"**Fever Risk:** {color_risk(fever_label)}", unsafe_allow_html=True)
 
-        # ----------------- Full report for download -----------------
         report_df = pd.DataFrame({
             "Patient_Name": [name],
             "Age": [age],
@@ -96,7 +93,6 @@ elif mode == "Live/CSV Input":
     else:
         sensor_data = pd.read_csv(uploaded_file)
 
-        # ----------------- Predictions -----------------
         stress_pred = stress_model.predict(sensor_data[features])
         cardio_pred = cardio_model.predict(sensor_data[features])
         fever_pred = fever_model.predict(sensor_data[features])
@@ -105,28 +101,24 @@ elif mode == "Live/CSV Input":
         sensor_data['Cardio_Resp_Risk'] = cardio_le.inverse_transform(cardio_pred)
         sensor_data['Fever_Risk'] = fever_le.inverse_transform(fever_pred)
 
-        # Add patient info
         sensor_data.insert(0, "Patient_Name", name)
         sensor_data.insert(1, "Age", age)
         sensor_data.insert(2, "Gender", gender)
 
-        # Personalized greeting
         st.markdown(f"### {name}, this is your health report. Stay Healthy! 🎯")
 
-        # Color-coded DataFrame
         def highlight_risk(row):
-            return ['' , '', '', '', '', '',
+            return ['','','','','','',
                     f'color:red' if row['Stress_Level'].lower()=='high' else 'color:orange' if row['Stress_Level'].lower()=='medium' else 'color:green',
                     f'color:red' if row['Cardio_Resp_Risk'].lower()=='high' else 'color:orange' if row['Cardio_Resp_Risk'].lower()=='medium' else 'color:green',
-                    f'color:red' if row['Fever_Risk'].lower()=='high' else 'color:orange' if row['Fever_Risk'].lower()=='medium' else 'color:green'
-                   ]
+                    f'color:red' if row['Fever_Risk'].lower()=='high' else 'color:orange' if row['Fever_Risk'].lower()=='medium' else 'color:green']
 
         st.dataframe(sensor_data.style.apply(highlight_risk, axis=1))
 
-        # Download full report
         report_csv = sensor_data.to_csv(index=False).encode('utf-8')
         st.download_button("Download Full Report", data=report_csv,
                            file_name=f"{name}_live_report.csv", mime="text/csv")
+
 
 
 """
