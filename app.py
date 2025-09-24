@@ -1,24 +1,25 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
 
-# Page configuration
+# ----------------- Page setup -----------------
 st.set_page_config(page_title="Patient Monitoring & Prediction", layout="wide")
 st.title("Patient Monitoring & Vital Prediction System")
 
-# Load models -
+# ----------------- Load models -----------------
 stress_model = joblib.load("stress_model.pkl")
 stress_le = joblib.load("label_encoder_stress.pkl")
+
 cardio_model = joblib.load("cardio_model.pkl")
 cardio_le = joblib.load("label_encoder_cardio.pkl")
+
 fever_model = joblib.load("fever_model.pkl")
 fever_le = joblib.load("label_encoder_fever.pkl")
 
 features = ['Heart_Rate', 'HRV', 'SpO2', 'Respiration_Rate', 'Temperature']
 
-# Sidebar -
+# ----------------- Sidebar -----------------
 mode = st.sidebar.radio("Select Input Mode", ["Manual Input", "Live/CSV Input"])
 
 st.sidebar.header("Patient Information")
@@ -26,7 +27,7 @@ name = st.sidebar.text_input("Patient Name")
 age = st.sidebar.number_input("Age", min_value=0, max_value=120, value=30)
 gender = st.sidebar.selectbox("Gender", ["Male", "Female", "Other"])
 
-# Helper function -
+# ----------------- Helper functions -----------------
 def color_risk(value):
     """Return HTML span with color based on risk level."""
     value_lower = value.lower()
@@ -37,7 +38,38 @@ def color_risk(value):
     else:
         return f"<span style='color:green;font-weight:bold'>{value}</span>"
 
-# Manual Input Mode -
+# Ideal parameter values by age
+ideal_values = {
+    'Heart_Rate': {'0-1': (100,160), '2-5': (80,120), '6-12': (70,110), '13-18': (60,100), '19-60': (60,100), '61+': (60,100)},
+    'Respiration_Rate': {'0-1': (30,60), '2-5': (20,30), '6-12': (18,25), '13-18': (12,20), '19-60': (12,20), '61+': (12,20)},
+    'SpO2': {'all': (95,100)},
+    'HRV': {'all': (20,100)},
+    'Temperature': {'all': (36.5,37.5)}
+}
+
+def get_ideal_values(age):
+    if age <= 1:
+        age_group = '0-1'
+    elif age <= 5:
+        age_group = '2-5'
+    elif age <= 12:
+        age_group = '6-12'
+    elif age <= 18:
+        age_group = '13-18'
+    elif age <= 60:
+        age_group = '19-60'
+    else:
+        age_group = '61+'
+    ideal = {
+        'Heart_Rate': ideal_values['Heart_Rate'][age_group],
+        'Respiration_Rate': ideal_values['Respiration_Rate'][age_group],
+        'SpO2': ideal_values['SpO2']['all'],
+        'HRV': ideal_values['HRV']['all'],
+        'Temperature': ideal_values['Temperature']['all']
+    }
+    return ideal
+
+# ----------------- Manual Input -----------------
 if mode == "Manual Input":
     st.header("Enter Vitals Manually")
     heart_rate = st.number_input("Heart Rate (BPM)", min_value=40, max_value=180, value=75)
@@ -62,6 +94,8 @@ if mode == "Manual Input":
         st.markdown(f"**Cardio-Respiratory Risk:** {color_risk(cardio_label)}", unsafe_allow_html=True)
         st.markdown(f"**Fever Risk:** {color_risk(fever_label)}", unsafe_allow_html=True)
 
+        # ----------------- Full report with ideal values -----------------
+        ideal = get_ideal_values(age)
         report_df = pd.DataFrame({
             "Patient_Name": [name],
             "Age": [age],
@@ -73,13 +107,18 @@ if mode == "Manual Input":
             "Temperature": [temp],
             "Stress_Level": [stress_label],
             "Cardio_Resp_Risk": [cardio_label],
-            "Fever_Risk": [fever_label]
+            "Fever_Risk": [fever_label],
+            "Ideal_Heart_Rate": [f"{ideal['Heart_Rate'][0]}-{ideal['Heart_Rate'][1]}"],
+            "Ideal_HRV": [f"{ideal['HRV'][0]}-{ideal['HRV'][1]}"],
+            "Ideal_SpO2": [f"{ideal['SpO2'][0]}-{ideal['SpO2'][1]}"],
+            "Ideal_Respiration_Rate": [f"{ideal['Respiration_Rate'][0]}-{ideal['Respiration_Rate'][1]}"],
+            "Ideal_Temperature": [f"{ideal['Temperature'][0]}-{ideal['Temperature'][1]}"]
         })
         report_csv = report_df.to_csv(index=False).encode('utf-8')
         st.download_button("Download Full Report", data=report_csv,
                            file_name=f"{name}_report.csv", mime="text/csv")
 
-# Live/CSV Input Mode -
+# ----------------- Live/CSV Input -----------------
 elif mode == "Live/CSV Input":
     st.header("Upload CSV from Sensors / Real-Time Data")
     st.write("CSV must have columns: Heart_Rate, HRV, SpO2, Respiration_Rate, Temperature")
@@ -112,7 +151,12 @@ elif mode == "Live/CSV Input":
 
         st.dataframe(sensor_data.style.apply(highlight_risk, axis=1))
 
-        report_csv = sensor_data.to_csv(index=False).encode('utf-8')
-        st.download_button("Download Full Report", data=report_csv,
-                           file_name=f"{name}_live_report.csv", mime="text/csv")
+        # Add ideal values to each row
+        ideal = get_ideal_values(age)
+        sensor_data['Ideal_Heart_Rate'] = f"{ideal['Heart_Rate'][0]}-{ideal['Heart_Rate'][1]}"
+        sensor_data['Ideal_HRV'] = f"{ideal['HRV'][0]}-{ideal['HRV'][1]}"
+        sensor_data['Ideal_SpO2'] = f"{ideal['SpO2'][0]}-{ideal['SpO2'][1]}"
+        sensor_data['Ideal_Respiration_Rate'] = f"{ideal['Respiration_Rate'][0]}-{ideal['Respiration_Rate'][1]}"
+        sensor_data['Ideal_Temperature'] = f"{ideal['Temperature'][0]}-{ideal['Temperature'][1]}"
 
+        report_csv = sensor_data.to_csv(index=False).encode('
