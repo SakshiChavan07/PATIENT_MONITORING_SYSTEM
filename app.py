@@ -1,5 +1,4 @@
 
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -9,7 +8,7 @@ import joblib
 st.set_page_config(page_title="Patient Monitoring & Prediction", layout="wide")
 st.title("Patient Monitoring & Vital Prediction System")
 
-# ----------------- Load models -----------------
+# Load models -
 stress_model = joblib.load("stress_model.pkl")
 stress_le = joblib.load("label_encoder_stress.pkl")
 
@@ -21,7 +20,7 @@ fever_le = joblib.load("label_encoder_fever.pkl")
 
 features = ['Heart_Rate', 'HRV', 'SpO2', 'Respiration_Rate', 'Temperature']
 
-# ----------------- Sidebar -----------------
+# Sidebar -
 mode = st.sidebar.radio("Select Input Mode", ["Manual Input", "Live/CSV Input"])
 
 st.sidebar.header("Patient Information")
@@ -29,7 +28,7 @@ name = st.sidebar.text_input("Patient Name")
 age = st.sidebar.number_input("Age", min_value=0, max_value=120, value=30)
 gender = st.sidebar.selectbox("Gender", ["Male", "Female", "Other"])
 
-# ----------------- Helper function -----------------
+# Helper function -
 def color_risk(value):
     """Return HTML span with color based on risk level."""
     value_lower = value.lower()
@@ -40,7 +39,7 @@ def color_risk(value):
     else:
         return f"<span style='color:green;font-weight:bold'>{value}</span>"
 
-# ----------------- Manual Input Mode -----------------
+# Manual Input Mode -
 if mode == "Manual Input":
     st.header("Enter Vitals Manually")
     heart_rate = st.number_input("Heart Rate (BPM)", min_value=40, max_value=180, value=75)
@@ -82,7 +81,7 @@ if mode == "Manual Input":
         st.download_button("Download Full Report", data=report_csv,
                            file_name=f"{name}_report.csv", mime="text/csv")
 
-# ----------------- Live/CSV Input Mode -----------------
+# Live/CSV Input Mode -
 elif mode == "Live/CSV Input":
     st.header("Upload CSV from Sensors / Real-Time Data")
     st.write("CSV must have columns: Heart_Rate, HRV, SpO2, Respiration_Rate, Temperature")
