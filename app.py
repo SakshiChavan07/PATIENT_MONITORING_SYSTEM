@@ -45,7 +45,7 @@ if mode == "Manual Input":
     resp_rate = st.number_input("Respiration Rate (breaths/min)", min_value=10, max_value=40, value=16)
     temp = st.number_input("Body Temperature (°C)", min_value=35.0, max_value=42.0, value=37.0)
 
-    user_data = np.array([[heart_rate, hrv, spo2, resp_]())]()_
+    user_data = np.array([[heart_rate, hrv, spo2, resp_]()]]()_
 
 
 """
