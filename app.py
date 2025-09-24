@@ -159,4 +159,6 @@ elif mode == "Live/CSV Input":
         sensor_data['Ideal_Respiration_Rate'] = f"{ideal['Respiration_Rate'][0]}-{ideal['Respiration_Rate'][1]}"
         sensor_data['Ideal_Temperature'] = f"{ideal['Temperature'][0]}-{ideal['Temperature'][1]}"
 
-        report_csv = sensor_data.to_csv(index=False).encode('
+        report_csv = sensor_data.to_csv(index=False).encode('utf-8')
+        st.download_button("Download Full Report", data=report_csv,
+                           file_name=f"{name}_live_report.csv", mime="text/csv")
